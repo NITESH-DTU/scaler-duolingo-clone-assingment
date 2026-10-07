@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   User,
   CoursePath,
   Lesson,
@@ -13,13 +13,9 @@ import type {
   Achievements,
 } from "@/types/api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-if (!API_URL) {
-  throw new Error(
-    "NEXT_PUBLIC_API_URL is not configured"
-  );
-}
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "/api/v1";
 
 async function request<T>(
   endpoint: string,
