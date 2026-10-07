@@ -5,9 +5,13 @@ export interface User {
   streak: number;
   hearts: number;
   gems: number;
+  streak_freezes: number;
 }
 
-export type SkillStatus = "completed" | "available" | "locked";
+export type SkillStatus =
+  | "completed"
+  | "available"
+  | "locked";
 
 export interface Skill {
   id: number;
@@ -76,12 +80,18 @@ export interface CompleteLessonResponse {
 
 export interface RefillHeartResponse {
   hearts: number;
+  gems: number;
 }
 
 export interface ProfileUser {
   name: string;
   xp: number;
   streak: number;
+}
+
+export interface ProfileCourse {
+  name: string | null;
+  language: string | null;
 }
 
 export interface ProfileStats {
@@ -91,6 +101,7 @@ export interface ProfileStats {
 
 export interface Profile {
   user: ProfileUser;
+  course: ProfileCourse;
   stats: ProfileStats;
 }
 
@@ -129,9 +140,6 @@ export interface Quest {
 
 export type Quests = Quest[];
 
-export interface ApiError {
-  detail: string;
-}
 export interface Achievement {
   id: number;
   title: string;
@@ -144,3 +152,7 @@ export interface Achievement {
 }
 
 export type Achievements = Achievement[];
+
+export interface ApiError {
+  detail: string;
+}

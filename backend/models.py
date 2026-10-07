@@ -1,4 +1,12 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -10,37 +18,50 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
 
-    xp = Column(Integer, default=0)
-    streak = Column(Integer, default=0)
-    hearts = Column(Integer, default=5)
-    gems = Column(Integer, default=100)
+    xp = Column(Integer, default=0, nullable=False)
+    streak = Column(Integer, default=0, nullable=False)
+    hearts = Column(Integer, default=5, nullable=False)
+    gems = Column(Integer, default=100, nullable=False)
+    streak_freezes = Column(Integer, default=0, nullable=False)
 
     last_activity = Column(Date, nullable=True)
     joined_at = Column(Date, nullable=True)
 
     skill_progress = relationship(
         "UserSkillProgress",
-        back_populates="user"
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     lesson_progress = relationship(
         "UserLessonProgress",
-        back_populates="user"
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     daily_activities = relationship(
         "DailyActivity",
-        back_populates="user"
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     quest_progress = relationship(
         "UserQuestProgress",
-        back_populates="user"
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     achievement_progress = relationship(
         "UserAchievementProgress",
-        back_populates="user"
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    settings = relationship(
+        "UserSettings",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
 
@@ -53,7 +74,9 @@ class Course(Base):
 
     units = relationship(
         "Unit",
-        back_populates="course"
+        back_populates="course",
+        cascade="all, delete-orphan",
+        order_by="Unit.order",
     )
 
 
@@ -61,10 +84,12 @@ class Unit(Base):
     __tablename__ = "units"
 
     id = Column(Integer, primary_key=True)
+
     course_id = Column(
         Integer,
         ForeignKey("courses.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     title = Column(String, nullable=False)
@@ -72,12 +97,14 @@ class Unit(Base):
 
     course = relationship(
         "Course",
-        back_populates="units"
+        back_populates="units",
     )
 
     skills = relationship(
         "Skill",
-        back_populates="unit"
+        back_populates="unit",
+        cascade="all, delete-orphan",
+        order_by="Skill.order",
     )
 
 
@@ -85,29 +112,34 @@ class Skill(Base):
     __tablename__ = "skills"
 
     id = Column(Integer, primary_key=True)
+
     unit_id = Column(
         Integer,
         ForeignKey("units.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     title = Column(String, nullable=False)
     order = Column(Integer, nullable=False)
-    xp_reward = Column(Integer, default=20)
+    xp_reward = Column(Integer, default=20, nullable=False)
 
     unit = relationship(
         "Unit",
-        back_populates="skills"
+        back_populates="skills",
     )
 
     lessons = relationship(
         "Lesson",
-        back_populates="skill"
+        back_populates="skill",
+        cascade="all, delete-orphan",
+        order_by="Lesson.order",
     )
 
     user_progress = relationship(
         "UserSkillProgress",
-        back_populates="skill"
+        back_populates="skill",
+        cascade="all, delete-orphan",
     )
 
 
@@ -115,10 +147,12 @@ class Lesson(Base):
     __tablename__ = "lessons"
 
     id = Column(Integer, primary_key=True)
+
     skill_id = Column(
         Integer,
         ForeignKey("skills.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     title = Column(String, nullable=False)
@@ -126,17 +160,20 @@ class Lesson(Base):
 
     skill = relationship(
         "Skill",
-        back_populates="lessons"
+        back_populates="lessons",
     )
 
     exercises = relationship(
         "Exercise",
-        back_populates="lesson"
+        back_populates="lesson",
+        cascade="all, delete-orphan",
+        order_by="Exercise.order",
     )
 
     user_progress = relationship(
         "UserLessonProgress",
-        back_populates="lesson"
+        back_populates="lesson",
+        cascade="all, delete-orphan",
     )
 
 
@@ -144,10 +181,12 @@ class Exercise(Base):
     __tablename__ = "exercises"
 
     id = Column(Integer, primary_key=True)
+
     lesson_id = Column(
         Integer,
         ForeignKey("lessons.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     type = Column(String, nullable=False)
@@ -158,7 +197,7 @@ class Exercise(Base):
 
     lesson = relationship(
         "Lesson",
-        back_populates="exercises"
+        back_populates="exercises",
     )
 
 
@@ -170,27 +209,37 @@ class UserSkillProgress(Base):
     user_id = Column(
         Integer,
         ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     skill_id = Column(
         Integer,
         ForeignKey("skills.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
-    progress = Column(Integer, default=0)
-    crowns = Column(Integer, default=0)
-    completed = Column(Boolean, default=False)
+    progress = Column(Integer, default=0, nullable=False)
+    crowns = Column(Integer, default=0, nullable=False)
+    completed = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "skill_id",
+            name="uq_user_skill_progress",
+        ),
+    )
 
     user = relationship(
         "User",
-        back_populates="skill_progress"
+        back_populates="skill_progress",
     )
 
     skill = relationship(
         "Skill",
-        back_populates="user_progress"
+        back_populates="user_progress",
     )
 
 
@@ -202,25 +251,35 @@ class UserLessonProgress(Base):
     user_id = Column(
         Integer,
         ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     lesson_id = Column(
         Integer,
         ForeignKey("lessons.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
-    completed = Column(Boolean, default=False)
+    completed = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "lesson_id",
+            name="uq_user_lesson_progress",
+        ),
+    )
 
     user = relationship(
         "User",
-        back_populates="lesson_progress"
+        back_populates="lesson_progress",
     )
 
     lesson = relationship(
         "Lesson",
-        back_populates="user_progress"
+        back_populates="user_progress",
     )
 
 
@@ -232,21 +291,26 @@ class DailyActivity(Base):
     user_id = Column(
         Integer,
         ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     date = Column(Date, nullable=False)
-    xp_earned = Column(Integer, default=0)
+    xp_earned = Column(Integer, default=0, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "date",
+            name="uq_user_daily_activity",
+        ),
+    )
 
     user = relationship(
         "User",
-        back_populates="daily_activities"
+        back_populates="daily_activities",
     )
 
-
-# ---------------------------------------------------------
-# QUESTS
-# ---------------------------------------------------------
 
 class Quest(Base):
     __tablename__ = "quests"
@@ -255,25 +319,20 @@ class Quest(Base):
 
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)
-
     icon = Column(String, nullable=False)
 
-    # earn_xp
-    # complete_lessons
-    # correct_streak
     quest_type = Column(String, nullable=False)
-
-    # daily / monthly
     period = Column(String, nullable=False)
 
     target = Column(Integer, nullable=False)
-    reward_gems = Column(Integer, default=0)
+    reward_gems = Column(Integer, default=0, nullable=False)
 
-    active = Column(Boolean, default=True)
+    active = Column(Boolean, default=True, nullable=False)
 
     progress = relationship(
         "UserQuestProgress",
-        back_populates="quest"
+        back_populates="quest",
+        cascade="all, delete-orphan",
     )
 
 
@@ -285,34 +344,41 @@ class UserQuestProgress(Base):
     user_id = Column(
         Integer,
         ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     quest_id = Column(
         Integer,
         ForeignKey("quests.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     date = Column(Date, nullable=False)
 
-    progress = Column(Integer, default=0)
-    completed = Column(Boolean, default=False)
+    progress = Column(Integer, default=0, nullable=False)
+    completed = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "quest_id",
+            "date",
+            name="uq_user_quest_date",
+        ),
+    )
 
     user = relationship(
         "User",
-        back_populates="quest_progress"
+        back_populates="quest_progress",
     )
 
     quest = relationship(
         "Quest",
-        back_populates="progress"
+        back_populates="progress",
     )
 
-
-# ---------------------------------------------------------
-# ACHIEVEMENTS
-# ---------------------------------------------------------
 
 class Achievement(Base):
     __tablename__ = "achievements"
@@ -321,19 +387,15 @@ class Achievement(Base):
 
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)
-
     icon = Column(String, nullable=False)
 
-    # streak
-    # xp
-    # lessons
     achievement_type = Column(String, nullable=False)
-
     target = Column(Integer, nullable=False)
 
     progress = relationship(
         "UserAchievementProgress",
-        back_populates="achievement"
+        back_populates="achievement",
+        cascade="all, delete-orphan",
     )
 
 
@@ -345,32 +407,38 @@ class UserAchievementProgress(Base):
     user_id = Column(
         Integer,
         ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     achievement_id = Column(
         Integer,
         ForeignKey("achievements.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
-    progress = Column(Integer, default=0)
-    completed = Column(Boolean, default=False)
+    progress = Column(Integer, default=0, nullable=False)
+    completed = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "achievement_id",
+            name="uq_user_achievement_progress",
+        ),
+    )
 
     user = relationship(
         "User",
-        back_populates="achievement_progress"
+        back_populates="achievement_progress",
     )
 
     achievement = relationship(
         "Achievement",
-        back_populates="progress"
+        back_populates="progress",
     )
 
-
-# ---------------------------------------------------------
-# SETTINGS
-# ---------------------------------------------------------
 
 class UserSettings(Base):
     __tablename__ = "user_settings"
@@ -380,11 +448,26 @@ class UserSettings(Base):
     user_id = Column(
         Integer,
         ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
-    sound_enabled = Column(Boolean, default=True)
-    music_enabled = Column(Boolean, default=True)
-    notifications_enabled = Column(Boolean, default=True)
+    sound_enabled = Column(Boolean, default=True, nullable=False)
+    music_enabled = Column(Boolean, default=True, nullable=False)
+    notifications_enabled = Column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
 
-    user = relationship("User")
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            name="uq_user_settings",
+        ),
+    )
+
+    user = relationship(
+        "User",
+        back_populates="settings",
+    )

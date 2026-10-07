@@ -16,7 +16,9 @@ import type {
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 if (!API_URL) {
-  throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  throw new Error(
+    "NEXT_PUBLIC_API_URL is not configured"
+  );
 }
 
 async function request<T>(
@@ -24,20 +26,28 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
+    const response = await fetch(
+      `${API_URL}${endpoint}`,
+      {
+        ...options,
+
+        cache: "no-store",
+
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+      }
+    );
 
     if (!response.ok) {
       let message = "Something went wrong";
 
       try {
         const error = await response.json();
-        message = error?.detail || message;
+
+        message =
+          error?.detail || message;
       } catch {}
 
       throw new Error(message);
@@ -49,7 +59,9 @@ async function request<T>(
       throw error;
     }
 
-    throw new Error("Unable to connect to the server");
+    throw new Error(
+      "Unable to connect to the server"
+    );
   }
 }
 
@@ -61,7 +73,9 @@ export const api = {
     request<CoursePath>("/course/path"),
 
   getLesson: (lessonId: number) =>
-    request<Lesson>(`/lessons/${lessonId}`),
+    request<Lesson>(
+      `/lessons/${lessonId}`
+    ),
 
   submitAnswer: (
     exerciseId: number,
@@ -71,7 +85,9 @@ export const api = {
       `/exercises/${exerciseId}/answer`,
       {
         method: "POST",
-        body: JSON.stringify({ answer }),
+        body: JSON.stringify({
+          answer,
+        }),
       }
     ),
 
@@ -90,6 +106,24 @@ export const api = {
         method: "POST",
       }
     ),
+
+  buyHeart: () =>
+    request<{
+      message: string;
+      hearts: number;
+      gems: number;
+    }>("/shop/buy/heart", {
+      method: "POST",
+    }),
+
+  buyStreakFreeze: () =>
+    request<{
+      message: string;
+      streak_freezes: number;
+      gems: number;
+    }>("/shop/buy/streak-freeze", {
+      method: "POST",
+    }),
 
   getProfile: () =>
     request<Profile>("/profile"),
@@ -112,5 +146,7 @@ export const api = {
     request<Quests>("/quests"),
 
   getAchievements: () =>
-    request<Achievements>("/achievements"),
+    request<Achievements>(
+      "/achievements"
+    ),
 };

@@ -4,76 +4,84 @@ import { useEffect, useState } from "react";
 
 import Sidebar from "@/components/Sidebar";
 import TopStats from "@/components/TopStats";
-import RightSidebar from "@/components/RightSidebar";
 import LearningPath from "@/components/LearningPath";
+import RightSidebar from "@/components/RightSidebar";
 
 import { api } from "@/lib/api";
-import type { CoursePath, User } from "@/types/api";
+import type {
+  CoursePath,
+  User,
+} from "@/types/api";
 
 export default function HomePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [coursePath, setCoursePath] = useState<CoursePath | null>(null);
+  const [user, setUser] = useState<User | null>(
+    null
+  );
+
+  const [coursePath, setCoursePath] =
+    useState<CoursePath | null>(null);
+
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadHome() {
       try {
-        const [userData, pathData] = await Promise.all([
-          api.getMe(),
-          api.getCoursePath(),
-        ]);
+        const [userData, pathData] =
+          await Promise.all([
+            api.getMe(),
+            api.getCoursePath(),
+          ]);
 
         setUser(userData);
         setCoursePath(pathData);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load data"
+      } catch (error) {
+        console.error(
+          "Failed to load home:",
+          error
         );
       } finally {
         setLoading(false);
       }
     }
 
-    loadData();
+    loadHome();
   }, []);
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="text-5xl">🦉</div>
-
-          <p className="mt-4 text-lg font-extrabold text-[#777]">
-            Loading your learning path...
-          </p>
+        <div className="text-lg font-extrabold text-[#777]">
+          Loading your course...
         </div>
       </div>
     );
   }
 
-  if (error || !user || !coursePath) {
+  if (!user || !coursePath) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white px-6">
-        <div className="w-full max-w-[450px] rounded-2xl border border-[#ddd] bg-white p-8 text-center shadow-sm">
-          <div className="text-5xl">😕</div>
+        <div className="text-center">
+          <div className="text-5xl">
+            😕
+          </div>
 
-          <h1 className="mt-4 text-xl font-extrabold text-[#444]">
-            Something went wrong
+          <h1 className="mt-4 text-2xl font-extrabold text-[#444]">
+            Unable to load your course
           </h1>
 
-          <p className="mt-2 text-sm text-[#777]">
-            {error || "Unable to load your data."}
+          <p className="mt-2 text-sm font-semibold text-[#888]">
+            Please make sure the backend is
+            running and try again.
           </p>
 
           <button
             type="button"
-            onClick={() => window.location.reload()}
-            className="mt-6 rounded-xl border-b-4 border-[#46a302] bg-[#58cc02] px-6 py-3 text-sm font-extrabold text-white"
+            onClick={() =>
+              window.location.reload()
+            }
+            className="mt-6 rounded-2xl bg-[#58cc02] px-6 py-3 font-extrabold text-white shadow-[0_4px_0_#46a302]"
           >
-            TRY AGAIN
+            Try again
           </button>
         </div>
       </div>
@@ -84,17 +92,17 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       <Sidebar />
 
-      <main className="min-h-screen pb-[72px] lg:ml-[300px] lg:pb-0">
-        <TopStats user={user} />
+      <main className="min-h-screen lg:ml-[300px]">
+        <div className="mx-auto max-w-[1400px] px-5 py-6 sm:px-8 lg:px-10">
+          <TopStats user={user} />
 
-        <div className="flex items-start">
-          {/* Learning path */}
-          <section className="min-w-0 flex-1">
-            <LearningPath data={coursePath} />
-          </section>
+          <div className="mt-8 flex items-start gap-8">
+            <section className="min-w-0 flex-1">
+              <LearningPath
+                data={coursePath}
+              />
+            </section>
 
-          {/* Right sidebar */}
-          <div className="hidden xl:block">
             <RightSidebar user={user} />
           </div>
         </div>

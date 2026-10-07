@@ -66,6 +66,7 @@ export default function LeaderboardPage() {
               streak: 0,
               hearts: 0,
               gems: 0,
+              streak_freezes: 0,
             }
           }
         />
