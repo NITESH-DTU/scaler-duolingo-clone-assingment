@@ -15,7 +15,7 @@
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "/api/v1";
+  "/svc/api/v1";
 
 async function request<T>(
   endpoint: string,
