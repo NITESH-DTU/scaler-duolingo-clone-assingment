@@ -1,0 +1,465 @@
+from datetime import date, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from database import get_db
+from models import (
+    Achievement,
+    DailyActivity,
+    Lesson,
+    Quest,
+    Skill,
+    User,
+    UserAchievementProgress,
+    UserLessonProgress,
+    UserQuestProgress,
+    UserSkillProgress,
+)
+
+router = APIRouter(
+    prefix="/api/v1/lessons",
+    tags=["Progress"],
+)
+
+DEFAULT_USER_ID = 1
+
+
+@router.post("/{lesson_id}/complete")
+def complete_lesson(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+):
+    user = (
+        db.query(User)
+        .filter(User.id == DEFAULT_USER_ID)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    lesson = (
+        db.query(Lesson)
+        .filter(Lesson.id == lesson_id)
+        .first()
+    )
+
+    if not lesson:
+        raise HTTPException(
+            status_code=404,
+            detail="Lesson not found",
+        )
+
+    lesson_progress = (
+        db.query(UserLessonProgress)
+        .filter(
+            UserLessonProgress.user_id == user.id,
+            UserLessonProgress.lesson_id == lesson.id,
+        )
+        .first()
+    )
+
+    if not lesson_progress:
+        lesson_progress = UserLessonProgress(
+            user_id=user.id,
+            lesson_id=lesson.id,
+            completed=False,
+        )
+        db.add(lesson_progress)
+        db.flush()
+
+    # Prevent repeatedly farming XP from the same lesson.
+    if lesson_progress.completed:
+        skill_progress = (
+            db.query(UserSkillProgress)
+            .filter(
+                UserSkillProgress.user_id == user.id,
+                UserSkillProgress.skill_id == lesson.skill_id,
+            )
+            .first()
+        )
+
+        return {
+            "message": "Lesson already completed",
+            "xp_earned": 0,
+            "total_xp": user.xp,
+            "streak": user.streak,
+            "daily_xp": get_daily_xp(
+                db,
+                user.id,
+                date.today(),
+            ),
+            "skill_progress": (
+                skill_progress.progress
+                if skill_progress
+                else 0
+            ),
+        }
+
+    # -----------------------------------------------------
+    # LESSON PROGRESS
+    # -----------------------------------------------------
+
+    lesson_progress.completed = True
+
+    skill = (
+        db.query(Skill)
+        .filter(Skill.id == lesson.skill_id)
+        .first()
+    )
+
+    if not skill:
+        raise HTTPException(
+            status_code=404,
+            detail="Skill not found",
+        )
+
+    skill_progress = (
+        db.query(UserSkillProgress)
+        .filter(
+            UserSkillProgress.user_id == user.id,
+            UserSkillProgress.skill_id == skill.id,
+        )
+        .first()
+    )
+
+    if not skill_progress:
+        skill_progress = UserSkillProgress(
+            user_id=user.id,
+            skill_id=skill.id,
+            progress=0,
+            crowns=0,
+            completed=False,
+        )
+        db.add(skill_progress)
+        db.flush()
+
+    skill_progress.progress = min(
+        skill_progress.progress + 20,
+        100,
+    )
+
+    if skill_progress.progress >= 100:
+        skill_progress.completed = True
+        skill_progress.crowns = min(
+            skill_progress.crowns + 1,
+            5,
+        )
+
+    # -----------------------------------------------------
+    # XP
+    # -----------------------------------------------------
+
+    xp_earned = skill.xp_reward or 20
+
+    user.xp += xp_earned
+
+    today = date.today()
+
+    activity = (
+        db.query(DailyActivity)
+        .filter(
+            DailyActivity.user_id == user.id,
+            DailyActivity.date == today,
+        )
+        .first()
+    )
+
+    if not activity:
+        activity = DailyActivity(
+            user_id=user.id,
+            date=today,
+            xp_earned=0,
+        )
+        db.add(activity)
+        db.flush()
+
+    activity.xp_earned += xp_earned
+
+    # -----------------------------------------------------
+    # STREAK
+    # -----------------------------------------------------
+
+    if user.last_activity is None:
+        user.streak = 1
+
+    elif user.last_activity == today:
+        pass
+
+    elif user.last_activity == today - timedelta(days=1):
+        user.streak += 1
+
+    else:
+        user.streak = 1
+
+    user.last_activity = today
+
+    # -----------------------------------------------------
+    # DAILY QUESTS
+    # -----------------------------------------------------
+
+    update_daily_quests(
+        db=db,
+        user=user,
+        today=today,
+        xp_earned=xp_earned,
+    )
+
+    # -----------------------------------------------------
+    # MONTHLY QUEST
+    # -----------------------------------------------------
+
+    update_monthly_quest(
+        db=db,
+        user=user,
+        today=today,
+    )
+
+    # -----------------------------------------------------
+    # ACHIEVEMENTS
+    # -----------------------------------------------------
+
+    update_achievements(
+        db=db,
+        user=user,
+    )
+
+    db.commit()
+
+    daily_xp = get_daily_xp(
+        db,
+        user.id,
+        today,
+    )
+
+    return {
+        "message": "Lesson completed",
+        "xp_earned": xp_earned,
+        "total_xp": user.xp,
+        "streak": user.streak,
+        "daily_xp": daily_xp,
+        "skill_progress": skill_progress.progress,
+    }
+
+
+# =========================================================
+# QUEST HELPERS
+# =========================================================
+
+def update_daily_quests(
+    db: Session,
+    user: User,
+    today: date,
+    xp_earned: int,
+):
+    quests = (
+        db.query(Quest)
+        .filter(
+            Quest.active == True,
+            Quest.period == "daily",
+        )
+        .all()
+    )
+
+    for quest in quests:
+        progress = (
+            db.query(UserQuestProgress)
+            .filter(
+                UserQuestProgress.user_id == user.id,
+                UserQuestProgress.quest_id == quest.id,
+                UserQuestProgress.date == today,
+            )
+            .first()
+        )
+
+        if not progress:
+            progress = UserQuestProgress(
+                user_id=user.id,
+                quest_id=quest.id,
+                date=today,
+                progress=0,
+                completed=False,
+            )
+            db.add(progress)
+            db.flush()
+
+        if progress.completed:
+            continue
+
+        if quest.quest_type == "earn_xp":
+            progress.progress += xp_earned
+
+        elif quest.quest_type == "complete_lessons":
+            progress.progress += 1
+
+        elif quest.quest_type == "combo_xp":
+            progress.progress += min(
+                xp_earned,
+                5,
+            )
+
+        elif quest.quest_type == "learning_minutes":
+            # One completed lesson counts as one minute
+            # for this mocked learning-time quest.
+            progress.progress += 1
+
+        progress.progress = min(
+            progress.progress,
+            quest.target,
+        )
+
+        if progress.progress >= quest.target:
+            progress.completed = True
+
+            user.gems += quest.reward_gems
+
+
+def update_monthly_quest(
+    db: Session,
+    user: User,
+    today: date,
+):
+    quest = (
+        db.query(Quest)
+        .filter(
+            Quest.active == True,
+            Quest.period == "monthly",
+            Quest.quest_type == "complete_quests",
+        )
+        .first()
+    )
+
+    if not quest:
+        return
+
+    progress = (
+        db.query(UserQuestProgress)
+        .filter(
+            UserQuestProgress.user_id == user.id,
+            UserQuestProgress.quest_id == quest.id,
+        )
+        .first()
+    )
+
+    if not progress:
+        progress = UserQuestProgress(
+            user_id=user.id,
+            quest_id=quest.id,
+            date=today,
+            progress=0,
+            completed=False,
+        )
+        db.add(progress)
+        db.flush()
+
+    if progress.completed:
+        return
+
+    completed_daily_quests = (
+        db.query(UserQuestProgress)
+        .join(Quest)
+        .filter(
+            UserQuestProgress.user_id == user.id,
+            UserQuestProgress.completed == True,
+            Quest.period == "daily",
+        )
+        .count()
+    )
+
+    progress.progress = min(
+        completed_daily_quests,
+        quest.target,
+    )
+
+    if progress.progress >= quest.target:
+        progress.completed = True
+        user.gems += quest.reward_gems
+
+
+# =========================================================
+# ACHIEVEMENTS
+# =========================================================
+
+def update_achievements(
+    db: Session,
+    user: User,
+):
+    achievements = (
+        db.query(Achievement)
+        .all()
+    )
+
+    completed_lessons = (
+        db.query(UserLessonProgress)
+        .filter(
+            UserLessonProgress.user_id == user.id,
+            UserLessonProgress.completed == True,
+        )
+        .count()
+    )
+
+    for achievement in achievements:
+        progress = (
+            db.query(UserAchievementProgress)
+            .filter(
+                UserAchievementProgress.user_id == user.id,
+                UserAchievementProgress.achievement_id
+                == achievement.id,
+            )
+            .first()
+        )
+
+        if not progress:
+            progress = UserAchievementProgress(
+                user_id=user.id,
+                achievement_id=achievement.id,
+                progress=0,
+                completed=False,
+            )
+            db.add(progress)
+            db.flush()
+
+        if achievement.achievement_type == "streak":
+            progress.progress = user.streak
+
+        elif achievement.achievement_type == "xp":
+            progress.progress = user.xp
+
+        elif achievement.achievement_type == "lessons":
+            progress.progress = completed_lessons
+
+        progress.progress = min(
+            progress.progress,
+            achievement.target,
+        )
+
+        if progress.progress >= achievement.target:
+            progress.completed = True
+
+
+# =========================================================
+# HELPERS
+# =========================================================
+
+def get_daily_xp(
+    db: Session,
+    user_id: int,
+    today: date,
+) -> int:
+    activity = (
+        db.query(DailyActivity)
+        .filter(
+            DailyActivity.user_id == user_id,
+            DailyActivity.date == today,
+        )
+        .first()
+    )
+
+    if not activity:
+        return 0
+
+    return activity.xp_earned
