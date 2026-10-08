@@ -7,6 +7,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
+
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -262,6 +263,7 @@ class UserLessonProgress(Base):
         index=True,
     )
 
+    started = Column(Boolean, default=False, nullable=False)
     completed = Column(Boolean, default=False, nullable=False)
 
     __table_args__ = (
@@ -287,12 +289,29 @@ class UserExerciseProgress(Base):
     __tablename__ = "user_exercise_progress"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    exercise_id = Column(Integer, ForeignKey("exercises.id"), nullable=False, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+    )
+
+    exercise_id = Column(
+        Integer,
+        ForeignKey("exercises.id"),
+        nullable=False,
+        index=True,
+    )
+
     xp_earned = Column(Integer, default=0, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint("user_id", "exercise_id", name="uq_user_exercise_progress"),
+        UniqueConstraint(
+            "user_id",
+            "exercise_id",
+            name="uq_user_exercise_progress",
+        ),
     )
 
 
