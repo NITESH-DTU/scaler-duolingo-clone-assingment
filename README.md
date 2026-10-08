@@ -111,15 +111,17 @@ npm run lint
 npm run build
 ```
 
-## Hosting readiness (not deployed)
+## Free deployment (Vercel + Render + Neon)
 
-The repository includes a standard Vercel + Render setup. Deploy `frontend/` as a Next.js project on Vercel, and use the root `render.yaml` Blueprint to create the FastAPI service and PostgreSQL database on Render. Next.js rewrites `/svc/api/*` to the configured `BACKEND_PROXY_URL`; Render's `preDeployCommand` safely seeds the database on first deployment. Vercel rewrites keep the browser URL same-origin while forwarding the request to the API ([Vercel rewrites](https://vercel.com/docs/routing/rewrites)); Render Blueprints define the API service and linked database ([Blueprint reference](https://render.com/docs/blueprint-spec), [monorepo root directories](https://render.com/docs/monorepo-support)).
+The frontend can run on Vercel Hobby, the FastAPI backend on a Render Free web service, and learner data in Neon Free Postgres. The root `render.yaml` creates only the free backend service; add Neon's connection string as `DATABASE_URL` when Render prompts for it. The backend seeds the database safely at startup. The Next.js rewrite forwards `/svc/api/*` through the Vercel server to Render, so browser requests stay same-origin.
 
-Deployment steps after pushing:
+Free services have limits: Render sleeps after 15 minutes without traffic and can take about a minute to wake. Neon Free has monthly compute and storage limits and scales its database to zero while idle. Vercel Hobby is intended for personal, non-commercial projects. Check the current limits before deployment ([Render Free](https://render.com/docs/free), [Neon plans](https://neon.com/docs/introduction/plans), [Vercel Hobby](https://vercel.com/docs/plans/hobby)).
 
-1. Create a Render Blueprint from the repository. The API service uses Render's `starter` plan so its pre-deploy seed command can run; the linked PostgreSQL database uses the persistent `basic-256mb` plan. Both are paid resources. Review Render's current pricing before creating them; Render reserves pre-deploy commands for paid web services ([deploy commands](https://render.com/docs/deploys)).
-2. Create a Vercel project with `frontend/` as its root directory and set `BACKEND_PROXY_URL` to the public Render API origin, without a trailing slash or `/api` path. The frontend build then includes the correct same-origin API rewrite.
-3. Wait for both services to become healthy, then verify the home path, lesson answer loop, restart persistence, and leaderboard on the hosted app.
-4. Add the deployed frontend URL and public repository URL to the assignment submission after deployment.
+Deployment steps:
 
-The project has not been pushed or deployed. The owner plans to do both after local work is complete.
+1. Create a Neon Postgres project and copy its connection string. Keep it private; it is a database credential.
+2. In Render, create a Blueprint from this repository and select `render.yaml`. When prompted, set `DATABASE_URL` to the Neon connection string. If Render does not prompt, add `DATABASE_URL` in the service's Environment settings. Deploy the API and confirm its `/` page says `Duolingo API is running`.
+3. In Vercel, import the repository and set `frontend/` as the Root Directory. Add `BACKEND_PROXY_URL` with the Render service's public origin, without a trailing slash or `/api`, then deploy.
+4. Open the Vercel URL, finish a lesson, refresh the page, and confirm XP, hearts, and leaderboard progress remain saved.
+
+For details on Blueprint env vars and Vercel monorepo root directories, see the [Render Blueprint reference](https://render.com/docs/blueprint-spec) and [Vercel monorepo docs](https://vercel.com/docs/monorepos).

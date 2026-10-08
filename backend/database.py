@@ -15,6 +15,9 @@ elif DATABASE_URL.startswith("postgresql://"):
 engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    # Free serverless Postgres may suspend while the API is idle; validate pooled
+    # connections before reuse so the next request can reconnect cleanly.
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(
