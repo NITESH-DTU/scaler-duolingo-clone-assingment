@@ -14,8 +14,8 @@ from models import (
     Skill,
     User,
     UserAchievementProgress,
-    UserLessonProgress,
     UserExerciseProgress,
+    UserLessonProgress,
     UserQuestProgress,
     UserSkillProgress,
 )
@@ -148,18 +148,28 @@ def complete_lesson(
         db.flush()
 
     db.flush()
-    skill_lesson_ids = [lesson_item.id for lesson_item in skill.lessons]
+
+    skill_lesson_ids = [
+        lesson_item.id
+        for lesson_item in skill.lessons
+    ]
+
     completed_skill_lessons = (
         db.query(UserLessonProgress)
         .filter(
             UserLessonProgress.user_id == user.id,
-            UserLessonProgress.lesson_id.in_(skill_lesson_ids),
+            UserLessonProgress.lesson_id.in_(
+                skill_lesson_ids
+            ),
             UserLessonProgress.completed == True,
         )
         .count()
     )
+
     skill_progress.progress = round(
-        completed_skill_lessons / max(len(skill_lesson_ids), 1) * 100
+        completed_skill_lessons
+        / max(len(skill_lesson_ids), 1)
+        * 100
     )
 
     if skill_progress.progress >= 100:
@@ -171,16 +181,51 @@ def complete_lesson(
 
         skill_progress.completed = True
 
-    xp_already_earned = (
-        db.query(func.coalesce(func.sum(UserExerciseProgress.xp_earned), 0))
-        .join(Exercise, UserExerciseProgress.exercise_id == Exercise.id)
+    lesson_exercises = (
+        db.query(Exercise)
+        .filter(Exercise.lesson_id == lesson.id)
+        .all()
+    )
+
+    total_exercises = max(
+        len(lesson_exercises),
+        1,
+    )
+
+    correct_exercises = (
+        db.query(UserExerciseProgress)
+        .join(
+            Exercise,
+            UserExerciseProgress.exercise_id
+            == Exercise.id,
+        )
         .filter(
             UserExerciseProgress.user_id == user.id,
             Exercise.lesson_id == lesson.id,
+            UserExerciseProgress.xp_earned > 0,
         )
-        .scalar()
+        .count()
     )
-    xp_earned = max(20 - xp_already_earned, 0)
+
+    accuracy = (
+        correct_exercises / total_exercises
+    )
+
+    completion_bonus = 5
+
+    if accuracy >= 1:
+        accuracy_bonus = 5
+    elif accuracy >= 0.8:
+        accuracy_bonus = 3
+    elif accuracy >= 0.6:
+        accuracy_bonus = 1
+    else:
+        accuracy_bonus = 0
+
+    xp_earned = (
+        completion_bonus
+        + accuracy_bonus
+    )
 
     user.xp += xp_earned
 
@@ -301,7 +346,10 @@ def update_daily_quests(
         if quest.quest_type in {"earn_xp", "xp"}:
             progress.progress += xp_earned
 
-        elif quest.quest_type in {"complete_lessons", "lessons"}:
+        elif quest.quest_type in {
+            "complete_lessons",
+            "lessons",
+        }:
             if lesson_completed:
                 progress.progress += 1
 
@@ -334,7 +382,9 @@ def update_monthly_quest(
         .filter(
             Quest.active == True,
             Quest.period == "monthly",
-            Quest.quest_type.in_(["complete_quests", "lessons"]),
+            Quest.quest_type.in_(
+                ["complete_quests", "lessons"]
+            ),
         )
         .first()
     )
@@ -343,7 +393,13 @@ def update_monthly_quest(
         return
 
     month_start = today.replace(day=1)
-    progress_date = month_start if quest.quest_type == "lessons" else today
+
+    progress_date = (
+        month_start
+        if quest.quest_type == "lessons"
+        else today
+    )
+
     progress = get_or_create_quest_progress(
         db=db,
         user_id=user.id,
@@ -355,7 +411,11 @@ def update_monthly_quest(
         return
 
     if quest.quest_type == "lessons":
-        progress.progress = min(progress.progress + 1, quest.target)
+        progress.progress = min(
+            progress.progress + 1,
+            quest.target,
+        )
+
     else:
         completed_daily_quests = (
             db.query(UserQuestProgress)

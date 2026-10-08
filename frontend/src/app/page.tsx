@@ -14,9 +14,7 @@ import type {
 } from "@/types/api";
 
 export default function HomePage() {
-  const [user, setUser] = useState<User | null>(
-    null
-  );
+  const [user, setUser] = useState<User | null>(null);
 
   const [coursePath, setCoursePath] =
     useState<CoursePath | null>(null);
@@ -35,10 +33,7 @@ export default function HomePage() {
         setUser(userData);
         setCoursePath(pathData);
       } catch (error) {
-        console.error(
-          "Failed to load home:",
-          error
-        );
+        console.error("Failed to load home:", error);
       } finally {
         setLoading(false);
       }
@@ -61,24 +56,19 @@ export default function HomePage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white px-6">
         <div className="text-center">
-          <div className="text-5xl">
-            😕
-          </div>
+          <div className="text-5xl">😕</div>
 
           <h1 className="mt-4 text-2xl font-extrabold text-[#444]">
             Unable to load your course
           </h1>
 
           <p className="mt-2 text-sm font-semibold text-[#888]">
-            Please make sure the backend is
-            running and try again.
+            Please make sure the backend is running and try again.
           </p>
 
           <button
             type="button"
-            onClick={() =>
-              window.location.reload()
-            }
+            onClick={() => window.location.reload()}
             className="mt-6 rounded-2xl bg-[#58cc02] px-6 py-3 font-extrabold text-white shadow-[0_4px_0_#46a302]"
           >
             Try again
@@ -93,19 +83,22 @@ export default function HomePage() {
       <Sidebar />
 
       <main className="min-h-screen pb-24 lg:ml-[220px] lg:pb-0 2xl:ml-[256px]">
-        <div className="relative mx-auto max-w-[1072px] px-4 pb-4 pt-12 sm:px-7 lg:px-8">
-          <div className="mb-4 flex justify-end 2xl:absolute 2xl:right-[26px] 2xl:top-5 2xl:z-10 2xl:mb-0">
+        <div className="mx-auto max-w-[1180px] px-4 pb-10 pt-5 sm:px-7 lg:px-8">
+          
+          {/* Top statistics stay inside the normal layout */}
+          <div className="mb-5 flex justify-end border-b border-[#eeeeee] pb-3">
             <TopStats user={user} />
           </div>
 
-          <div className="grid items-start gap-7 2xl:grid-cols-[minmax(470px,1fr)_368px]">
+          {/* Main learning area + right sidebar */}
+          <div className="grid items-start gap-8 2xl:grid-cols-[minmax(0,1fr)_368px]">
             <section className="min-w-0">
-              <LearningPath
-                data={coursePath}
-              />
+              <LearningPath data={coursePath} />
             </section>
 
-            <RightSidebar user={user} />
+            <aside className="min-w-0">
+              <RightSidebar user={user} />
+            </aside>
           </div>
         </div>
       </main>
