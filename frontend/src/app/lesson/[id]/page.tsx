@@ -68,10 +68,7 @@ function LessonContent() {
   }, [lessonId]);
 
   async function refillHeart() {
-    if (
-      refilling ||
-      hearts >= 5
-    ) {
+    if (refilling || hearts >= 5) {
       return;
     }
 
@@ -129,9 +126,7 @@ function LessonContent() {
 
       setResult(response.correct);
       setAnswerXp(response.xp_earned);
-      setCorrectAnswer(
-        response.correct_answer ?? ""
-      );
+      setCorrectAnswer(response.correct_answer ?? "");
       setHearts(response.hearts_remaining);
 
       if (
@@ -272,11 +267,11 @@ function LessonContent() {
                   refilling ||
                   gems < HEART_REFILL_COST
                 }
-                className={`w-full rounded-2xl px-6 py-4 font-extrabold text-white shadow-[0_4px_0_#46a302] transition ${
+                className={`w-full rounded-2xl px-6 py-4 font-extrabold text-white transition ${
                   refilling ||
                   gems < HEART_REFILL_COST
                     ? "cursor-not-allowed bg-[#aaa] shadow-[0_4px_0_#888]"
-                    : "bg-[#58cc02] hover:bg-[#4fbd02]"
+                    : "bg-[#58cc02] shadow-[0_4px_0_#46a302] hover:bg-[#4fbd02]"
                 }`}
               >
                 {refilling
@@ -369,6 +364,11 @@ function LessonContent() {
       Math.max(lesson.exercises.length, 1)) *
     100;
 
+  const checkDisabled =
+    !selectedAnswer.trim() ||
+    submitting ||
+    hearts <= 0;
+
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
@@ -456,17 +456,11 @@ function LessonContent() {
               <button
                 type="button"
                 onClick={submitAnswer}
-                disabled={
-                  !selectedAnswer.trim() ||
-                  submitting ||
-                  hearts <= 0
-                }
-                className={`rounded-2xl px-8 py-4 font-extrabold text-white shadow-[0_4px_0_#1899d6] ${
-                  !selectedAnswer.trim() ||
-                  submitting ||
-                  hearts <= 0
+                disabled={checkDisabled}
+                className={`rounded-2xl px-8 py-4 font-extrabold text-white transition ${
+                  checkDisabled
                     ? "cursor-not-allowed bg-[#aaa] shadow-[0_4px_0_#888]"
-                    : "bg-[#1cb0f6] hover:bg-[#1599d1]"
+                    : "bg-[#1cb0f6] shadow-[0_4px_0_#1899d6] hover:bg-[#1599d1]"
                 }`}
               >
                 {submitting
@@ -506,9 +500,11 @@ function ResultCard({
   return (
     <div className="rounded-2xl border-2 border-[#eee] bg-[#fafafa] p-5">
       <div className="text-3xl">{icon}</div>
+
       <p className="mt-2 text-2xl font-extrabold text-[#444]">
         {value}
       </p>
+
       <p className="mt-1 text-sm font-bold text-[#999]">
         {label}
       </p>
