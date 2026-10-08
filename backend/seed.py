@@ -338,7 +338,7 @@ for skill_unit, unit_skills in unit_skill_groups:
                 user_id=user.id, skill_id=skill.id, progress=0, crowns=0, completed=False,
             ))
         if db.query(UserLessonProgress).filter_by(user_id=user.id, lesson_id=lesson.id).first() is None:
-            db.add(UserLessonProgress(user_id=user.id, lesson_id=lesson.id, completed=False))
+            db.add(UserLessonProgress(user_id=user.id, lesson_id=lesson.id, started=False, completed=False))
 
 
 # ---------------------------------------------------------

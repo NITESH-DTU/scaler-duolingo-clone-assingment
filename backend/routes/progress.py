@@ -75,9 +75,10 @@ def complete_lesson(
 
     if not lesson_progress:
         lesson_progress = UserLessonProgress(
-            user_id=user.id,
-            lesson_id=lesson.id,
-            completed=False,
+        user_id=user.id,
+        lesson_id=lesson.id,
+        started=False,
+        completed=False,
         )
 
         db.add(lesson_progress)

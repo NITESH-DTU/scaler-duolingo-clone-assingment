@@ -262,6 +262,7 @@ class UserLessonProgress(Base):
         index=True,
     )
 
+    started = Column(Boolean, default=False, nullable=False)
     completed = Column(Boolean, default=False, nullable=False)
 
     __table_args__ = (
