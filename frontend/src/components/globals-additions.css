@@ -1,0 +1,11 @@
+/* Add to globals.css */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+body {
+  font-family: var(--font-nunito), "Nunito", system-ui, sans-serif;
+  color: #4b4b4b;
+  -webkit-font-smoothing: antialiased;
+}

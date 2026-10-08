@@ -8,41 +8,59 @@ interface LearningPathProps {
   data: CoursePath;
 }
 
+const NODE_GAP = 134;      // fixed vertical distance between node centres
+const AMPLITUDE = 64;      // max horizontal offset in px (Duolingo is ~60-75)
+const NODES_PER_UNIT = 3;  // 3 nodes => one half-wave per unit
+const PERIOD = NODES_PER_UNIT * 2; // full wave = 2 units (right bow, left bow)
+
+// One continuous wave across the whole course.
+// +0.5 centres each half-wave on the middle node of a unit:
+// g=0..5 -> 0.5, 1, 0.5, -0.5, -1, -0.5  (times AMPLITUDE)
+function getOffset(globalIndex: number) {
+  return AMPLITUDE * Math.sin((2 * Math.PI * (globalIndex + 0.5)) / PERIOD);
+}
+
 export default function LearningPath({ data }: LearningPathProps) {
+  let globalIndex = 0; // keeps the wave continuous across units
+
   return (
-    <div className="mx-auto w-full max-w-[592px] pb-20 2xl:-translate-x-[17px]">
-      {data.units.map((unit) => (
-        <section key={unit.id} className="mb-12">
+    <div className="mx-auto w-full max-w-[700px] pb-20">
+      {data.units.map((unit, unitIndex) => (
+        <section key={unit.id} className="mb-10">
           <UnitHeader
             title={unit.title}
             unitNumber={unit.order}
             courseName={data.course.name}
           />
 
-          <div className="relative mx-auto max-w-[500px] pb-3 pt-1">
-            <div className="relative flex flex-col items-center gap-0">
-              {unit.skills.map((skill, index) => {
-                const positions = [
-                  "-translate-x-[66px] sm:-translate-x-[82px]",
-                  "translate-x-[4px]",
-                  "translate-x-[68px] sm:translate-x-[84px]",
-                  "translate-x-[4px]",
-                  "-translate-x-[66px] sm:-translate-x-[82px]",
-                ];
+          <div className="mx-auto flex w-full max-w-[560px] flex-col items-center pt-8">
+            {unit.skills.map((skill) => {
+              const offset = getOffset(globalIndex++);
 
-                const position =
-                  positions[index % positions.length];
-                return (
-                  <div
-                    key={skill.id}
-                    className={`relative ${position}`}
-                  >
-                    <SkillNode skill={skill} />
-                  </div>
-                );
-              })}
-            </div>
+              return (
+                <div
+                  key={skill.id}
+                  className="flex items-center justify-center"
+                  style={{
+                    height: `${NODE_GAP}px`,
+                    transform: `translateX(${offset.toFixed(1)}px)`,
+                  }}
+                >
+                  <SkillNode skill={skill} />
+                </div>
+              );
+            })}
           </div>
+
+          {unitIndex < data.units.length - 1 && (
+            <div className="mx-auto mt-4 flex max-w-[430px] items-center gap-4 px-6">
+              <div className="h-px flex-1 bg-[#eeeeee]" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#eeeeee] bg-white text-xs text-[#c5c5c5]">
+                ✦
+              </div>
+              <div className="h-px flex-1 bg-[#eeeeee]" />
+            </div>
+          )}
         </section>
       ))}
     </div>
