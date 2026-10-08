@@ -53,6 +53,7 @@ export interface Exercise {
   type: ExerciseType | string;
   question: string;
   options: string | null;
+  word_bank?: string[] | null;
   order: number;
 }
 
@@ -66,6 +67,7 @@ export interface Lesson {
 export interface AnswerResponse {
   correct: boolean;
   hearts_remaining: number;
+  xp_earned: number;
   correct_answer?: string;
 }
 

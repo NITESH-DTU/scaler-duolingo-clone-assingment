@@ -57,7 +57,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-white">
       <Sidebar />
 
-      <main className="ml-[300px] min-h-screen">
+      <main className="min-h-screen pb-20 lg:ml-[220px] lg:pb-0 2xl:ml-[256px]">
         <div className="mx-auto max-w-[800px] px-8 py-10">
           <div className="mb-10">
             <h1 className="text-3xl font-extrabold text-[#444]">

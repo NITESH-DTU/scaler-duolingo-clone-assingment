@@ -14,8 +14,7 @@
 } from "@/types/api";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "/svc/api/v1";
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/svc/api/v1";
 
 async function request<T>(
   endpoint: string,

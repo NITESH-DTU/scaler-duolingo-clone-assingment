@@ -1,3 +1,4 @@
+import argparse
 from datetime import date
 
 from database import Base, SessionLocal, engine
@@ -23,10 +24,25 @@ from models import (
 # RESET DATABASE
 # ---------------------------------------------------------
 
-Base.metadata.drop_all(bind=engine)
+parser = argparse.ArgumentParser(description="Seed the Duolingo demo database.")
+parser.add_argument(
+    "--reset",
+    action="store_true",
+    help="Delete existing tables and learner progress before reseeding.",
+)
+args = parser.parse_args()
+
+if args.reset:
+    Base.metadata.drop_all(bind=engine)
+
 Base.metadata.create_all(bind=engine)
 
 db = SessionLocal()
+
+if db.query(User).first() and not args.reset:
+    print("Database already contains a learner; no changes were made.")
+    db.close()
+    raise SystemExit(0)
 
 
 # ---------------------------------------------------------

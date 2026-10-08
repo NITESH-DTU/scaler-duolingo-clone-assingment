@@ -283,6 +283,19 @@ class UserLessonProgress(Base):
     )
 
 
+class UserExerciseProgress(Base):
+    __tablename__ = "user_exercise_progress"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    exercise_id = Column(Integer, ForeignKey("exercises.id"), nullable=False, index=True)
+    xp_earned = Column(Integer, default=0, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "exercise_id", name="uq_user_exercise_progress"),
+    )
+
+
 class DailyActivity(Base):
     __tablename__ = "daily_activities"
 

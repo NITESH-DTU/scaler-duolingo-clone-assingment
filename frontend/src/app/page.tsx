@@ -92,12 +92,14 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       <Sidebar />
 
-      <main className="min-h-screen lg:ml-[300px]">
-        <div className="mx-auto max-w-[1400px] px-5 py-6 sm:px-8 lg:px-10">
-          <TopStats user={user} />
+      <main className="min-h-screen pb-24 lg:ml-[220px] lg:pb-0 2xl:ml-[256px]">
+        <div className="relative mx-auto max-w-[1072px] px-4 pb-4 pt-12 sm:px-7 lg:px-8">
+          <div className="mb-4 flex justify-end 2xl:absolute 2xl:right-[26px] 2xl:top-5 2xl:z-10 2xl:mb-0">
+            <TopStats user={user} />
+          </div>
 
-          <div className="mt-8 flex items-start gap-8">
-            <section className="min-w-0 flex-1">
+          <div className="grid items-start gap-7 2xl:grid-cols-[minmax(470px,1fr)_368px]">
+            <section className="min-w-0">
               <LearningPath
                 data={coursePath}
               />

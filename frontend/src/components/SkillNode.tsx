@@ -16,6 +16,14 @@ export default function SkillNode({
   const locked = skill.status === "locked";
   const completed = skill.status === "completed";
   const available = skill.status === "available";
+  const icon = getSkillIcon(skill.title, skill.id);
+  const palette = [
+    "border-[#46a302] bg-[#58cc02] shadow-[0_5px_0_#46a302]",
+    "border-[#1899d6] bg-[#1cb0f6] shadow-[0_5px_0_#168cc0]",
+    "border-[#8a4de8] bg-[#a66bff] shadow-[0_5px_0_#7842c7]",
+    "border-[#e78b00] bg-[#ffb020] shadow-[0_5px_0_#cf7600]",
+    "border-[#df4c78] bg-[#ff6d9a] shadow-[0_5px_0_#cf456d]",
+  ];
 
   const lessonId = skill.lesson_id ?? skill.id;
 
@@ -29,15 +37,11 @@ export default function SkillNode({
 
     event.preventDefault();
 
-    const attemptId = Date.now();
-
-    router.push(
-      `/lesson/${lessonId}?attempt=${attemptId}`
-    );
+    router.push(`/lesson/${lessonId}`);
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex h-[86px] w-[132px] flex-col items-center">
       <Link
         href={
           locked
@@ -45,64 +49,63 @@ export default function SkillNode({
             : `/lesson/${lessonId}`
         }
         onClick={handleClick}
-        className={`relative flex h-[82px] w-[82px] items-center justify-center rounded-full border-[6px] transition-transform ${
+        aria-label={`${skill.title}, ${skill.status}${completed ? `, ${skill.crowns} crowns` : ""}`}
+        aria-disabled={locked}
+        title={skill.title}
+        className={`relative flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-full border-[5px] transition-transform focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[#1cb0f6] ${
           locked
-            ? "cursor-not-allowed border-[#d9d9d9] bg-[#eeeeee]"
-            : completed
-              ? "border-[#46b900] bg-[#58cc02] shadow-[0_5px_0_#46a302] hover:-translate-y-1"
-              : "border-[#46a302] bg-[#58cc02] shadow-[0_5px_0_#46a302] hover:-translate-y-1"
+            ? "cursor-not-allowed border-[#d9d9d9] bg-[#eeeeee] shadow-[0_5px_0_#d0d0d0]"
+            : `${palette[(skill.id - 1) % palette.length]} hover:-translate-y-1`
         }`}
       >
-        {locked ? (
-          <span className="text-3xl text-[#999]">
-            🔒
-          </span>
-        ) : completed ? (
-          <span className="text-3xl text-white">
-            ✓
-          </span>
-        ) : (
-          <span className="text-3xl">
-            ⭐
-          </span>
+        <span aria-hidden="true" className={`text-[28px] ${locked ? "grayscale opacity-70" : "drop-shadow-sm"}`}>
+          {icon}
+        </span>
+
+        {completed && (
+          <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#ffc800] text-sm font-black text-white shadow-sm">✓</span>
         )}
 
         {available && (
-          <span className="absolute -top-3 rounded-full bg-[#ffc800] px-2 py-1 text-[11px] font-black text-white shadow-sm">
+          <span className="absolute -top-3 rounded-full border-2 border-white bg-white px-3 py-1 text-[10px] font-black tracking-wide text-[#1cb0f6] shadow-sm">
             START
           </span>
         )}
       </Link>
 
-      <div className="mt-3 text-center">
-        <p className="text-[15px] font-extrabold text-[#444]">
+      {completed ? (
+        <span className="mt-0.5 text-[11px] font-extrabold text-[#b88600]" aria-label={`${skill.crowns} crowns`}>
+          ♛ {skill.crowns}
+        </span>
+      ) : available ? (
+        <span className="mt-0.5 max-w-[120px] truncate text-[11px] font-extrabold text-[#555]">
           {skill.title}
-        </p>
-
-        <div className="mt-2 flex items-center justify-center gap-1">
-          <span className="text-sm">
-            👑
-          </span>
-
-          <span className="text-xs font-bold text-[#999]">
-            {skill.crowns}
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-2 w-[90px]">
-        <div className="h-2 overflow-hidden rounded-full bg-[#e5e5e5]">
-          <div
-            className="h-full rounded-full bg-[#58cc02] transition-all"
-            style={{
-              width: `${Math.min(
-                Math.max(skill.progress, 0),
-                100
-              )}%`,
-            }}
-          />
-        </div>
-      </div>
+        </span>
+      ) : (
+        <span className="sr-only">{skill.title}</span>
+      )}
     </div>
   );
+}
+
+function getSkillIcon(title: string, id: number) {
+  const name = title.toLowerCase();
+  const topics: Array<[string[], string]> = [
+    [["greet", "hello"], "👋"],
+    [["food", "eat", "drink", "restaurant"], "🍎"],
+    [["travel", "transport", "direction", "journey"], "🧳"],
+    [["animal", "pet"], "🐾"],
+    [["family", "people"], "👨‍👩‍👧"],
+    [["number", "math", "count"], "🔢"],
+    [["color", "colour", "art"], "🎨"],
+    [["school", "study", "learn"], "📚"],
+    [["weather", "season"], "☀️"],
+    [["home", "house", "room"], "🏠"],
+    [["work", "job", "career"], "💼"],
+    [["shopping", "shop", "store"], "🛍️"],
+    [["intro", "name", "about"], "🙋"],
+  ];
+  const match = topics.find(([keywords]) => keywords.some((word) => name.includes(word)));
+  const fallback = ["🎯", "🧩", "🌱", "🎵", "🚲", "🌍", "🐬", "🪁"];
+  return match?.[1] ?? fallback[(id - 1) % fallback.length];
 }

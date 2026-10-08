@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,16 +24,35 @@ app = FastAPI(title="Duolingo Clone API")
 
 
 # CORS
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def normalize_vercel_service_path(request, call_next):
+    # Vercel Services forwards the original /svc/api/... path to the backend.
+    # The same API is mounted at /api/... for local development.
+    path = request.scope.get("path", "")
+    if path.startswith("/svc/api/"):
+        request.scope["path"] = path[len("/svc"):]
+        raw_path = request.scope.get("raw_path")
+        if raw_path and raw_path.startswith(b"/svc/api/"):
+            request.scope["raw_path"] = raw_path[len(b"/svc"):]
+    return await call_next(request)
 
 
 # Routes

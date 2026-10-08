@@ -49,6 +49,7 @@ def get_quests(
                 db=db,
                 quest_id=quest.id,
                 today=today,
+                quest_type=quest.quest_type,
             )
 
         current_progress = (
@@ -104,6 +105,7 @@ def get_monthly_progress(
     db: Session,
     quest_id: int,
     today: date,
+    quest_type: str,
 ):
     month_start = today.replace(day=1)
 
@@ -129,7 +131,9 @@ def get_monthly_progress(
             <= month_end,
         )
         .order_by(
-            UserQuestProgress.date.desc()
+            UserQuestProgress.date.asc()
+            if quest_type == "lessons"
+            else UserQuestProgress.date.desc()
         )
         .first()
     )

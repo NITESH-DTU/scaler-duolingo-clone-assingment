@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-
 import DailyQuests from "@/components/DailyQuests";
 import type { User } from "@/types/api";
 
@@ -12,98 +11,31 @@ interface RightSidebarProps {
 export default function RightSidebar({
   user,
 }: RightSidebarProps) {
-  const leaderboardUnlocked = user.xp >= 20;
-
   return (
-    <aside className="hidden w-[320px] shrink-0 xl:block">
-      <div className="space-y-5">
-        <div className="rounded-2xl border-2 border-[#e5e5e5] bg-white p-5">
-          <div className="flex items-center justify-between">
+    <aside className="hidden w-[368px] shrink-0 2xl:mt-[44px] 2xl:-translate-x-[6px] 2xl:block">
+      <div className="space-y-4">
+        <Link href="/shop" className="block rounded-2xl border-2 border-[#e5e5e5] bg-white p-5 transition hover:border-[#cfcfcf]">
+          <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-wide text-[#999]">
-                Leaderboard
-              </p>
-
-              <h3 className="mt-1 text-lg font-extrabold text-[#444]">
-                Weekly competition
-              </h3>
+              <span className="inline-flex rounded-md bg-gradient-to-r from-[#1cb0f6] via-[#9b5de5] to-[#ed4ca0] px-2 py-0.5 text-xs font-black italic text-white">SUPER</span>
+              <h2 className="mt-3 text-lg font-extrabold text-[#4b4b4b]">Try Super for free</h2>
             </div>
-
-            <span className="text-3xl">
-              🏆
-            </span>
+            <div aria-hidden="true" className="flex h-[68px] w-[68px] shrink-0 rotate-6 items-center justify-center rounded-[26px] bg-gradient-to-br from-[#31d9df] via-[#248bff] to-[#a657ff] text-4xl shadow-[0_5px_0_#dff4ff]">✨</div>
           </div>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#888]">No ads, personalized practice, and unlimited Legendary!</p>
+          <span className="mt-5 block rounded-2xl bg-[#4b4bff] px-4 py-3 text-center text-sm font-extrabold text-white shadow-[0_4px_0_#3828d8]">TRY 1 WEEK FREE</span>
+        </Link>
 
-          {leaderboardUnlocked ? (
-            <>
-              <p className="mt-4 text-sm font-semibold leading-6 text-[#777]">
-                You're competing this week. Keep
-                earning XP to climb the leaderboard!
-              </p>
-
-              <Link
-                href="/leaderboard"
-                className="mt-4 block rounded-xl bg-[#fff7d6] px-4 py-3 text-center text-sm font-extrabold text-[#b88600] transition hover:bg-[#fff1b8]"
-              >
-                View leaderboard →
-              </Link>
-            </>
-          ) : (
-            <>
-              <p className="mt-4 text-sm font-semibold leading-6 text-[#777]">
-                Earn{" "}
-                <span className="font-extrabold text-[#444]">
-                  {20 - user.xp} more XP
-                </span>{" "}
-                to start competing.
-              </p>
-
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#eee]">
-                <div
-                  className="h-full rounded-full bg-[#ffc800] transition-all"
-                  style={{
-                    width: `${Math.min(
-                      (user.xp / 20) * 100,
-                      100
-                    )}%`,
-                  }}
-                />
-              </div>
-            </>
-          )}
+        <div className="rounded-2xl border-2 border-[#e5e5e5] bg-white p-5">
+          <h2 className="text-lg font-extrabold text-[#4b4b4b]">Weekly leaderboard</h2>
+          <div className="mt-4 flex items-center gap-4">
+            <span aria-hidden="true" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#eaf7ff] text-3xl">🛡️</span>
+            <p className="text-sm font-semibold leading-6 text-[#888]">{`You have ${user.xp} XP on the board. Keep learning to climb the ranks!`}</p>
+          </div>
+          <Link href="/leaderboard" className="mt-4 block text-sm font-extrabold text-[#1cb0f6] hover:text-[#168cc0]">VIEW LEADERBOARD →</Link>
         </div>
 
         <DailyQuests />
-
-        <div className="rounded-2xl border-2 border-[#e5e5e5] bg-white p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-wide text-[#999]">
-                Keep learning
-              </p>
-
-              <h3 className="mt-1 text-lg font-extrabold text-[#444]">
-                Your progress
-              </h3>
-            </div>
-
-            <span className="text-3xl">
-              🚀
-            </span>
-          </div>
-
-          <p className="mt-4 text-sm font-semibold leading-6 text-[#777]">
-            Complete lessons every day to build your
-            streak and earn more XP.
-          </p>
-
-          <Link
-            href="/"
-            className="mt-4 block rounded-xl bg-[#dff4ff] px-4 py-3 text-center text-sm font-extrabold text-[#1899d6] transition hover:bg-[#c9edff]"
-          >
-            Continue learning →
-          </Link>
-        </div>
 
         <div className="px-2 pb-5">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-[#aaa]">

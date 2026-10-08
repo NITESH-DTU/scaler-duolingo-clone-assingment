@@ -19,20 +19,20 @@ export default function ShopPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadUser() {
-    try {
-      const userData = await api.getMe();
-      setUser(userData);
-    } catch (err) {
-      console.error("Failed to load shop:", err);
-      setError("Unable to load the shop.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    loadUser();
+    let active = true;
+    api.getMe()
+      .then((userData) => {
+        if (active) setUser(userData);
+      })
+      .catch((err: unknown) => {
+        console.error("Failed to load shop:", err);
+        if (active) setError("Unable to load the shop.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   async function buyHeart() {
@@ -127,7 +127,7 @@ export default function ShopPage() {
       <div className="min-h-screen bg-white">
         <Sidebar />
 
-        <main className="flex min-h-screen items-center justify-center lg:ml-[300px]">
+        <main className="flex min-h-screen items-center justify-center lg:ml-[220px] 2xl:ml-[256px]">
           <div className="text-center">
             <div className="text-6xl">🛍️</div>
 
@@ -145,7 +145,7 @@ export default function ShopPage() {
       <div className="min-h-screen bg-white">
         <Sidebar />
 
-        <main className="flex min-h-screen items-center justify-center px-6 lg:ml-[300px]">
+        <main className="flex min-h-screen items-center justify-center px-6 lg:ml-[220px] 2xl:ml-[256px]">
           <div className="text-center">
             <div className="text-6xl">😕</div>
 
@@ -158,7 +158,10 @@ export default function ShopPage() {
               onClick={() => {
                 setLoading(true);
                 setError(null);
-                loadUser();
+                api.getMe()
+                  .then(setUser)
+                  .catch(() => setError("Unable to load the shop."))
+                  .finally(() => setLoading(false));
               }}
               className="mt-6 rounded-xl border-b-4 border-[#46a302] bg-[#58cc02] px-7 py-3 text-sm font-extrabold text-white"
             >
@@ -174,7 +177,7 @@ export default function ShopPage() {
     <div className="min-h-screen bg-white">
       <Sidebar />
 
-      <main className="min-h-screen pb-[80px] lg:ml-[300px] lg:pb-0">
+      <main className="min-h-screen pb-[80px] lg:ml-[220px] lg:pb-0 2xl:ml-[256px]">
         <TopStats user={user} />
 
         <div className="mx-auto w-full max-w-[900px] px-5 py-8 sm:px-8">

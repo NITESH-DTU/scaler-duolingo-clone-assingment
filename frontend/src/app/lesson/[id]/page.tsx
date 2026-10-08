@@ -19,6 +19,7 @@ function LessonContent() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [result, setResult] = useState<boolean | null>(null);
+  const [answerXp, setAnswerXp] = useState(0);
   const [correctAnswer, setCorrectAnswer] = useState("");
 
   const [hearts, setHearts] = useState(0);
@@ -127,6 +128,7 @@ function LessonContent() {
       );
 
       setResult(response.correct);
+      setAnswerXp(response.xp_earned);
       setCorrectAnswer(
         response.correct_answer ?? ""
       );
@@ -184,6 +186,7 @@ function LessonContent() {
     setSelectedAnswer("");
     setCorrectAnswer("");
     setResult(null);
+    setAnswerXp(0);
     setErrorMessage("");
   }
 
@@ -362,8 +365,8 @@ function LessonContent() {
     lesson.exercises[currentIndex];
 
   const progress =
-    ((currentIndex + 1) /
-      lesson.exercises.length) *
+    ((currentIndex + (result !== null ? 1 : 0)) /
+      Math.max(lesson.exercises.length, 1)) *
     100;
 
   return (
@@ -398,6 +401,7 @@ function LessonContent() {
 
         <div className="mx-auto mt-12 max-w-3xl">
           <ExerciseCard
+            key={exercise.id}
             exercise={exercise}
             selectedAnswer={selectedAnswer}
             setSelectedAnswer={setSelectedAnswer}
@@ -429,6 +433,12 @@ function LessonContent() {
                   ? "Excellent! That's correct."
                   : "Not quite!"}
               </p>
+
+              {result && (
+                <p className="mt-2 text-sm font-extrabold text-[#46a302]">
+                  +{answerXp} XP earned
+                </p>
+              )}
 
               {!result && correctAnswer && (
                 <p className="mt-2 font-bold text-[#555]">

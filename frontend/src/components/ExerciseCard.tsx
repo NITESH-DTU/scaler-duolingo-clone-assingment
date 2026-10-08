@@ -16,20 +16,13 @@ export default function ExerciseCard({
   setSelectedAnswer,
   result,
 }: ExerciseCardProps) {
-  const options = exercise.options
-    ? exercise.options
-        .split(",")
-        .map((option) => option.trim())
-        .filter(Boolean)
-    : [];
+  const options = parseOptions(exercise.options);
 
   const isChoice = exercise.type === "multiple_choice";
   const isMatch = exercise.type === "match";
+  const isTranslate = exercise.type === "translate" && Boolean(exercise.word_bank?.length);
 
-  const matchPairs = useMemo(
-    () => getMatchPairs(options),
-    [exercise.id, exercise.options]
-  );
+  const matchPairs = getMatchPairs(options);
 
   const [selectedLeft, setSelectedLeft] = useState<string | null>(
     null
@@ -40,6 +33,21 @@ export default function ExerciseCard({
   const [matchError, setMatchError] = useState<string | null>(
     null
   );
+  const [selectedTokenIds, setSelectedTokenIds] = useState<number[]>([]);
+
+  function addWord(tokenId: number) {
+    if (result !== null || selectedTokenIds.includes(tokenId)) return;
+    const nextIds = [...selectedTokenIds, tokenId];
+    setSelectedTokenIds(nextIds);
+    setSelectedAnswer(composeWordBankAnswer(nextIds.map((id) => exercise.word_bank![id])));
+  }
+
+  function removeWord(tokenId: number) {
+    if (result !== null) return;
+    const nextIds = selectedTokenIds.filter((id) => id !== tokenId);
+    setSelectedTokenIds(nextIds);
+    setSelectedAnswer(composeWordBankAnswer(nextIds.map((id) => exercise.word_bank![id])));
+  }
 
   function handleMatchLeft(value: string) {
     if (result !== null || matchedPairs.includes(value)) {
@@ -141,6 +149,32 @@ export default function ExerciseCard({
             );
           })}
         </div>
+      ) : isTranslate ? (
+        <div className="mt-10">
+          <p className="mb-3 text-sm font-bold text-[#999]">Tap the words to build your translation</p>
+          <div className="flex min-h-[76px] flex-wrap items-center gap-2 border-b-2 border-[#e5e5e5] pb-4" aria-label="Your translation">
+            {selectedTokenIds.length === 0 ? (
+              <span className="text-sm font-bold text-[#bbb]">Your answer</span>
+            ) : selectedTokenIds.map((tokenId) => (
+              <button key={tokenId} type="button" disabled={result !== null} onClick={() => removeWord(tokenId)} className="rounded-xl border-2 border-[#d6d6d6] border-b-4 bg-white px-3 py-2 font-extrabold text-[#4b4b4b] disabled:cursor-default" aria-label={`Remove ${exercise.word_bank![tokenId]}`}>
+                {exercise.word_bank![tokenId]}
+              </button>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {exercise.word_bank!.map((word, tokenId) => {
+              const selected = selectedTokenIds.includes(tokenId);
+              return (
+                <button key={`${tokenId}-${word}`} type="button" disabled={selected || result !== null} onClick={() => addWord(tokenId)} className={`rounded-xl border-2 border-b-4 px-4 py-2.5 font-extrabold transition disabled:cursor-default ${selected ? "border-transparent bg-transparent text-transparent shadow-none" : "border-[#dedede] bg-white text-[#4b4b4b] hover:bg-[#f7f7f7]"}`}>
+                  {word}
+                </button>
+              );
+            })}
+          </div>
+          {selectedTokenIds.length > 0 && result === null && (
+            <button type="button" onClick={() => { setSelectedTokenIds([]); setSelectedAnswer(""); }} className="mt-4 text-sm font-extrabold text-[#1cb0f6] hover:text-[#168cc0]">Clear answer</button>
+          )}
+        </div>
       ) : (
         <div className="mt-10">
           <input
@@ -159,6 +193,20 @@ export default function ExerciseCard({
       )}
     </div>
   );
+}
+
+function composeWordBankAnswer(tokens: string[]): string {
+  let answer = "";
+  for (const token of tokens) {
+    if (/^[,!.?;:]$/.test(token)) {
+      answer = answer.trimEnd() + token;
+    } else if (token === "¿" || token === "¡") {
+      answer += token;
+    } else {
+      answer += answer && !/[¿¡]$/.test(answer) ? ` ${token}` : token;
+    }
+  }
+  return answer;
 }
 
 interface MatchExerciseProps {
@@ -183,7 +231,7 @@ function MatchExercise({
   const rightOptions = useMemo(
     () =>
       [...pairs]
-        .sort(() => Math.random() - 0.5)
+        .reverse()
         .map((pair) => pair.right),
     [pairs]
   );
@@ -312,6 +360,26 @@ function getMatchPairs(
   }
 
   return pairs;
+}
+
+function parseOptions(value: string | null): string[] {
+  if (!value || value === "null") {
+    return [];
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((option): option is string => typeof option === "string");
+    }
+  } catch {
+    // Older seeded exercises store options as a comma-separated string.
+  }
+
+  return value
+    .split(",")
+    .map((option) => option.trim().replace(/^['"]|['"]$/g, ""))
+    .filter(Boolean);
 }
 
 function getExerciseLabel(type: string) {

@@ -20,11 +20,11 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-0 z-50 hidden h-screen w-[300px] flex-col border-r border-[#e5e5e5] bg-white px-5 py-7 lg:flex">
-        <div className="mb-8 px-4">
+      <aside className="fixed left-0 top-0 z-50 hidden h-screen w-[220px] flex-col border-r border-[#e5e5e5] bg-white px-3 py-6 lg:flex 2xl:w-[256px] 2xl:px-[5px]">
+        <div className="mb-8 px-4 2xl:px-6">
           <Link
             href="/"
-            className="text-[36px] font-extrabold tracking-[-2px] text-[#58cc02]"
+            className="text-[32px] font-extrabold tracking-[-2px] text-[#58cc02]"
           >
             duolingo
           </Link>
@@ -41,7 +41,7 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex h-[62px] items-center gap-5 rounded-[14px] px-5 transition ${
+                className={`flex h-[62px] items-center gap-4 rounded-[14px] px-3 transition ${
                   active
                     ? "border-2 border-[#1cb0f6] bg-[#dff4ff] text-[#1899d6]"
                     : "text-[#666666] hover:bg-[#f7f7f7]"
@@ -51,7 +51,7 @@ export default function Sidebar() {
                   {item.icon}
                 </span>
 
-                <span className="text-[16px] font-extrabold tracking-[1px]">
+                <span className="text-[14px] font-extrabold tracking-[0.7px]">
                   {item.label}
                 </span>
               </Link>
@@ -61,7 +61,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMoreOpen((value) => !value)}
-            className={`flex h-[62px] w-full items-center gap-5 rounded-[14px] px-5 transition ${
+            className={`flex h-[62px] w-full items-center gap-4 rounded-[14px] px-3 transition ${
               moreOpen
                 ? "bg-[#f7f7f7] text-[#666666]"
                 : "text-[#666666] hover:bg-[#f7f7f7]"
@@ -71,7 +71,7 @@ export default function Sidebar() {
               •••
             </span>
 
-            <span className="text-[16px] font-extrabold tracking-[1px]">
+            <span className="text-[14px] font-extrabold tracking-[0.7px]">
               MORE
             </span>
           </button>
@@ -81,24 +81,12 @@ export default function Sidebar() {
           )}
         </nav>
 
-        <div className="mt-auto rounded-2xl border border-[#ddd] px-5 py-7 text-center">
-          <div className="mb-3 text-4xl">♞</div>
-
-          <h3 className="text-[18px] font-extrabold text-[#444]">
-            Want to learn chess?
-          </h3>
-
-          <p className="mt-2 text-[16px] text-[#777]">
-            Duolingo makes it easy!
-          </p>
-
-          <button
-            type="button"
-            className="mt-5 text-[14px] font-extrabold tracking-wide text-[#1cb0f6]"
-          >
-            TRY CHESS
-          </button>
-        </div>
+        <Link href="/shop" className="mt-auto block rounded-2xl border-2 border-[#e5e5e5] p-4 text-center transition hover:border-[#c8e8ae] hover:bg-[#fbfff8]">
+          <div aria-hidden="true" className="mb-3 text-4xl">♞</div>
+          <p className="font-extrabold text-[#444]">Want to learn chess?</p>
+          <p className="mt-2 text-sm font-semibold text-[#777]">Duolingo makes it easy!</p>
+          <span className="mt-4 block text-xs font-extrabold uppercase tracking-wide text-[#1cb0f6]">Try chess</span>
+        </Link>
       </aside>
 
       {/* Mobile bottom navigation */}

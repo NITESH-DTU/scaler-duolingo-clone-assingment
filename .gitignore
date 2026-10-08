@@ -6,9 +6,11 @@ backend/**/__pycache__/
 
 # SQLite
 backend/*.db
+backend/.test_duolingo.sqlite3
 
 # Environment
 frontend/.env.local
+backend/.env
 .env
 .env.local
 

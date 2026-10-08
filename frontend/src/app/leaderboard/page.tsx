@@ -50,26 +50,14 @@ export default function LeaderboardPage() {
   const lessonsCompleted =
     profile?.stats.lessons_completed ?? 0;
 
-  const unlocked = lessonsCompleted >= 2;
+  const unlocked = lessonsCompleted >= 0;
 
   return (
     <div className="min-h-screen bg-white">
       <Sidebar />
 
-      <main className="min-h-screen pb-[80px] lg:ml-[300px] lg:pb-0">
-        <TopStats
-          user={
-            user ?? {
-              id: 1,
-              name: "Learner",
-              xp: 0,
-              streak: 0,
-              hearts: 0,
-              gems: 0,
-              streak_freezes: 0,
-            }
-          }
-        />
+      <main className="min-h-screen pb-[80px] lg:ml-[220px] lg:pb-0 2xl:ml-[256px]">
+        {user && <TopStats user={user} />}
 
         <div className="flex items-start">
           <section className="min-w-0 flex-1">
@@ -192,7 +180,7 @@ function UnlockedLeaderboard({
       <div className="rounded-2xl border border-[#dedede] bg-white p-4 sm:p-6">
         {loading ? (
           <div className="py-14 text-center">
-            <div className="text-5xl">🦉</div>
+            <div className="text-5xl">🏆</div>
 
             <p className="mt-4 font-extrabold text-[#777]">
               Loading leaderboard...
@@ -232,7 +220,7 @@ function UnlockedLeaderboard({
                   </div>
 
                   <div className="ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#dff4ff] text-xl sm:ml-4">
-                    🦉
+                    {getLearnerAvatar(entry.rank)}
                   </div>
 
                   <div className="ml-3 min-w-0 flex-1 sm:ml-4">
@@ -264,4 +252,9 @@ function UnlockedLeaderboard({
       </div>
     </div>
   );
+}
+
+function getLearnerAvatar(rank: number) {
+  const avatars = ["🧑‍🎓", "👩‍🎓", "🧑🏻‍💻", "👨🏽‍🎓", "👩🏻‍💻", "🧑🏾‍🎨"];
+  return avatars[(rank - 1) % avatars.length];
 }

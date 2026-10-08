@@ -87,7 +87,7 @@ export default function QuestsPage() {
     <div className="min-h-screen bg-white">
       <Sidebar />
 
-      <main className="min-h-screen pb-16 lg:ml-[300px]">
+      <main className="min-h-screen pb-16 lg:ml-[220px] 2xl:ml-[256px]">
         <div className="mx-auto max-w-[1000px] px-5 py-8 sm:px-8">
           <TopStats user={user} />
 

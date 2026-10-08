@@ -1,18 +1,21 @@
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import (
     Achievement,
     DailyActivity,
+    Exercise,
     Lesson,
     Quest,
     Skill,
     User,
     UserAchievementProgress,
     UserLessonProgress,
+    UserExerciseProgress,
     UserQuestProgress,
     UserSkillProgress,
 )
@@ -144,9 +147,19 @@ def complete_lesson(
         db.add(skill_progress)
         db.flush()
 
-    skill_progress.progress = min(
-        skill_progress.progress + 20,
-        100,
+    db.flush()
+    skill_lesson_ids = [lesson_item.id for lesson_item in skill.lessons]
+    completed_skill_lessons = (
+        db.query(UserLessonProgress)
+        .filter(
+            UserLessonProgress.user_id == user.id,
+            UserLessonProgress.lesson_id.in_(skill_lesson_ids),
+            UserLessonProgress.completed == True,
+        )
+        .count()
+    )
+    skill_progress.progress = round(
+        completed_skill_lessons / max(len(skill_lesson_ids), 1) * 100
     )
 
     if skill_progress.progress >= 100:
@@ -158,7 +171,16 @@ def complete_lesson(
 
         skill_progress.completed = True
 
-    xp_earned = skill.xp_reward or 20
+    xp_already_earned = (
+        db.query(func.coalesce(func.sum(UserExerciseProgress.xp_earned), 0))
+        .join(Exercise, UserExerciseProgress.exercise_id == Exercise.id)
+        .filter(
+            UserExerciseProgress.user_id == user.id,
+            Exercise.lesson_id == lesson.id,
+        )
+        .scalar()
+    )
+    xp_earned = max(20 - xp_already_earned, 0)
 
     user.xp += xp_earned
 
@@ -193,6 +215,7 @@ def complete_lesson(
         user=user,
         today=today,
         xp_earned=xp_earned,
+        lesson_completed=True,
     )
 
     update_monthly_quest(
@@ -253,6 +276,7 @@ def update_daily_quests(
     user: User,
     today: date,
     xp_earned: int,
+    lesson_completed: bool = True,
 ):
     quests = (
         db.query(Quest)
@@ -274,11 +298,12 @@ def update_daily_quests(
         if progress.completed:
             continue
 
-        if quest.quest_type == "earn_xp":
+        if quest.quest_type in {"earn_xp", "xp"}:
             progress.progress += xp_earned
 
-        elif quest.quest_type == "complete_lessons":
-            progress.progress += 1
+        elif quest.quest_type in {"complete_lessons", "lessons"}:
+            if lesson_completed:
+                progress.progress += 1
 
         elif quest.quest_type == "combo_xp":
             progress.progress += min(
@@ -309,7 +334,7 @@ def update_monthly_quest(
         .filter(
             Quest.active == True,
             Quest.period == "monthly",
-            Quest.quest_type == "complete_quests",
+            Quest.quest_type.in_(["complete_quests", "lessons"]),
         )
         .first()
     )
@@ -317,38 +342,41 @@ def update_monthly_quest(
     if not quest:
         return
 
+    month_start = today.replace(day=1)
+    progress_date = month_start if quest.quest_type == "lessons" else today
     progress = get_or_create_quest_progress(
         db=db,
         user_id=user.id,
         quest_id=quest.id,
-        today=today,
+        today=progress_date,
     )
 
     if progress.completed:
         return
 
-    month_start = today.replace(day=1)
-
-    completed_daily_quests = (
-        db.query(UserQuestProgress)
-        .join(
-            Quest,
-            UserQuestProgress.quest_id == Quest.id,
+    if quest.quest_type == "lessons":
+        progress.progress = min(progress.progress + 1, quest.target)
+    else:
+        completed_daily_quests = (
+            db.query(UserQuestProgress)
+            .join(
+                Quest,
+                UserQuestProgress.quest_id == Quest.id,
+            )
+            .filter(
+                UserQuestProgress.user_id == user.id,
+                UserQuestProgress.completed == True,
+                Quest.period == "daily",
+                UserQuestProgress.date >= month_start,
+                UserQuestProgress.date <= today,
+            )
+            .count()
         )
-        .filter(
-            UserQuestProgress.user_id == user.id,
-            UserQuestProgress.completed == True,
-            Quest.period == "daily",
-            UserQuestProgress.date >= month_start,
-            UserQuestProgress.date <= today,
-        )
-        .count()
-    )
 
-    progress.progress = min(
-        completed_daily_quests,
-        quest.target,
-    )
+        progress.progress = min(
+            completed_daily_quests,
+            quest.target,
+        )
 
     if progress.progress >= quest.target:
         progress.completed = True

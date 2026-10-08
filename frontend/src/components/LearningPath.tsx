@@ -10,43 +10,28 @@ interface LearningPathProps {
 
 export default function LearningPath({ data }: LearningPathProps) {
   return (
-    <div className="mx-auto w-full max-w-[760px] px-6 pb-20">
-      {/* Course heading */}
-      <div className="mb-10 pt-6 text-center">
-        <h1 className="text-3xl font-extrabold text-[#444]">
-          {data.course.name}
-        </h1>
-
-        <p className="mt-2 text-[15px] font-semibold text-[#999]">
-          Learn {data.course.language}
-        </p>
-      </div>
-
+    <div className="mx-auto w-full max-w-[592px] pb-20 2xl:-translate-x-[17px]">
       {data.units.map((unit) => (
-        <section key={unit.id} className="mb-20">
+        <section key={unit.id} className="mb-12">
           <UnitHeader
             title={unit.title}
             unitNumber={unit.order}
-            description="Learn the basics and build your foundation"
+            courseName={data.course.name}
           />
 
-          <div className="relative">
-            {/* Path line */}
-            <div className="absolute left-1/2 top-0 h-full w-[6px] -translate-x-1/2 rounded-full bg-[#e5e5e5]" />
-
-            <div className="relative flex flex-col items-center gap-16">
+          <div className="relative mx-auto max-w-[500px] pb-3 pt-1">
+            <div className="relative flex flex-col items-center gap-0">
               {unit.skills.map((skill, index) => {
                 const positions = [
-                  "-translate-x-[100px]",
-                  "translate-x-[5px]",
-                  "translate-x-[100px]",
-                  "translate-x-[5px]",
-                  "-translate-x-[100px]",
+                  "-translate-x-[66px] sm:-translate-x-[82px]",
+                  "translate-x-[4px]",
+                  "translate-x-[68px] sm:translate-x-[84px]",
+                  "translate-x-[4px]",
+                  "-translate-x-[66px] sm:-translate-x-[82px]",
                 ];
 
                 const position =
                   positions[index % positions.length];
-
                 return (
                   <div
                     key={skill.id}

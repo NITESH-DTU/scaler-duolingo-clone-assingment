@@ -51,7 +51,7 @@ export default function DailyQuests() {
         </div>
 
         <div className="py-8 text-center">
-          <div className="text-3xl">🦉</div>
+          <div className="text-3xl">⚡</div>
 
           <p className="mt-2 text-sm font-bold text-[#999]">
             Loading quests...
@@ -84,6 +84,9 @@ export default function DailyQuests() {
     );
   }
 
+  const dailyGoal = quests.find((quest) => quest.quest_type === "earn_xp" || quest.quest_type === "xp");
+  const remainingQuests = quests.filter((quest) => quest.id !== dailyGoal?.id);
+
   return (
     <div className="rounded-2xl border border-[#dedede] bg-white p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -99,14 +102,40 @@ export default function DailyQuests() {
         </Link>
       </div>
 
+      {dailyGoal && <DailyGoal quest={dailyGoal} />}
+
       <div>
-        {quests.map((quest, index) => (
+        {remainingQuests.map((quest, index) => (
           <DailyQuestItem
             key={quest.id}
             quest={quest}
-            last={index === quests.length - 1}
+            last={index === remainingQuests.length - 1}
           />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function DailyGoal({ quest }: { quest: Quest }) {
+  const percentage = quest.target > 0
+    ? Math.min((quest.progress / quest.target) * 100, 100)
+    : 0;
+
+  return (
+    <div className="mb-2 rounded-xl bg-[#fbfff5] p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-2xl">{quest.icon}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-extrabold text-[#444]">Daily goal</p>
+            <span className="text-xs font-extrabold text-[#777]">{quest.progress}/{quest.target} XP</span>
+          </div>
+          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#e9e9e9]">
+            <div className="h-full rounded-full bg-[#ffc800] transition-all" style={{ width: `${percentage}%` }} />
+          </div>
+          <p className="mt-2 text-xs font-bold text-[#999]">{quest.completed ? "Goal reached - great work!" : quest.description}</p>
+        </div>
       </div>
     </div>
   );
@@ -121,14 +150,6 @@ function DailyQuestItem({
   quest,
   last,
 }: DailyQuestItemProps) {
-  const progress =
-    quest.target > 0
-      ? Math.min(
-          quest.progress / quest.target,
-          1
-        )
-      : 0;
-
   return (
     <div
       className={`py-5 ${

@@ -8,9 +8,9 @@ interface TopStatsProps {
 
 export default function TopStats({ user }: TopStatsProps) {
   return (
-    <div className="flex items-center justify-end gap-7 border-b border-[#eee] px-8 py-4">
+    <div className="flex flex-wrap items-center justify-end gap-3 py-1 sm:gap-5 2xl:gap-4">
       {/* XP */}
-      <div className="flex items-center gap-2">
+      <div aria-label={`${user.xp} experience points`} className="flex items-center gap-2 rounded-xl px-3 py-2">
         <span className="text-[23px]">⚡</span>
 
         <span className="text-[15px] font-extrabold text-[#ffc800]">
@@ -19,7 +19,7 @@ export default function TopStats({ user }: TopStatsProps) {
       </div>
 
       {/* Streak */}
-      <div className="flex items-center gap-2">
+      <div aria-label={`${user.streak} day streak`} className="flex items-center gap-2 rounded-xl px-3 py-2">
         <span className="text-[24px]">🔥</span>
 
         <span className="text-[15px] font-extrabold text-[#ff9600]">
@@ -28,7 +28,7 @@ export default function TopStats({ user }: TopStatsProps) {
       </div>
 
       {/* Gems */}
-      <div className="flex items-center gap-2">
+      <div aria-label={`${user.gems} gems`} className="flex items-center gap-2 rounded-xl px-3 py-2">
         <span className="text-[23px]">💎</span>
 
         <span className="text-[15px] font-extrabold text-[#1cb0f6]">
@@ -37,7 +37,7 @@ export default function TopStats({ user }: TopStatsProps) {
       </div>
 
       {/* Hearts */}
-      <div className="flex items-center gap-2">
+      <div aria-label={`${user.hearts} hearts`} className="flex items-center gap-2 rounded-xl px-3 py-2">
         <span className="text-[24px]">❤️</span>
 
         <span className="text-[15px] font-extrabold text-[#ff4b4b]">

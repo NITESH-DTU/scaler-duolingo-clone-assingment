@@ -8,7 +8,7 @@ interface MoreMenuProps {
 
 export default function MoreMenu({ onClose }: MoreMenuProps) {
   return (
-    <div className="absolute bottom-[165px] left-[265px] z-50 w-[315px] overflow-hidden rounded-2xl border border-[#ddd] bg-white shadow-[0_4px_15px_rgba(0,0,0,0.12)]">
+    <div className="absolute bottom-[165px] left-[195px] z-50 w-[300px] overflow-hidden rounded-2xl border border-[#ddd] bg-white shadow-[0_4px_15px_rgba(0,0,0,0.12)] 2xl:left-[220px]">
       <div className="border-b px-6 py-5 text-[15px] font-extrabold text-[#666]">
         🟢 DUOLINGO ENGLISH TEST
       </div>

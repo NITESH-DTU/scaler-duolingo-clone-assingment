@@ -70,18 +70,24 @@ def get_learning_path(
     }
 
     skill_completed_map = {}
+    skill_lesson_map = {}
+    skill_lesson_count_map = {}
 
     for skill in all_skills:
-        lessons = list(skill.lessons)
+        lessons = sorted(skill.lessons, key=lambda lesson: lesson.id)
+        skill_lesson_map[skill.id] = lessons
 
         if not lessons:
             skill_completed_map[skill.id] = False
+            skill_lesson_count_map[skill.id] = 0
             continue
 
-        skill_completed_map[skill.id] = all(
+        completed_count = sum(
             lesson.id in completed_lesson_ids
             for lesson in lessons
         )
+        skill_lesson_count_map[skill.id] = completed_count
+        skill_completed_map[skill.id] = completed_count == len(lessons)
 
     result_units = []
 
@@ -94,6 +100,13 @@ def get_learning_path(
         ):
             progress = skill_progress_map.get(
                 skill.id
+            )
+            lessons = skill_lesson_map.get(skill.id, [])
+            completed_count = skill_lesson_count_map.get(skill.id, 0)
+            lesson_progress_percent = (
+                round(completed_count / len(lessons) * 100)
+                if lessons
+                else 0
             )
 
             skill_index = all_skills.index(skill)
@@ -130,21 +143,14 @@ def get_learning_path(
                 "id": skill.id,
                 "title": skill.title,
                 "status": status,
-                "progress": (
-                    progress.progress
-                    if progress
-                    else 0
-                ),
+                "progress": lesson_progress_percent,
                 "crowns": (
-                    progress.crowns
-                    if progress
-                    else 0
+                    max(progress.crowns if progress else 0, 1 if is_completed else 0)
                 ),
                 "xp_reward": skill.xp_reward,
-                "lesson_id": (
-                    skill.lessons[0].id
-                    if skill.lessons
-                    else None
+                "lesson_id": next(
+                    (lesson.id for lesson in lessons if lesson.id not in completed_lesson_ids),
+                    lessons[-1].id if lessons else None,
                 ),
             })
 
