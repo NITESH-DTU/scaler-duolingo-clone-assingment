@@ -1,3 +1,6 @@
+> **⚠️ Deployment Note**
+>
+> The backend is hosted on Render's free tier and may enter an idle state after a period of inactivity. When this happens, the first request may take a few minutes(8-10) while the backend wakes up. If the application initially shows **"Unable to load your course"**, please wait briefly and click **Try Again** once the backend is active.
 # Duolingo Web App Clone
 
 A full-stack Duolingo-inspired Spanish learning platform built for the Scaler SDE Fullstack assignment.
